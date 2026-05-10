@@ -98,14 +98,6 @@
     <div class="stage-host">
       <div class="stage-cap"><b>SCREEN 4</b> · ROUNDTABLE</div>
       <div id="roundtable-mount"></div>
-      <div class="agent-credit">
-        Each of the 11 avatars is connected to a specific Claude Code subagent.
-        On screen mount, the page calls <code>/api/roundtable</code> on the Nous backend
-        (override via <code>window.NOUS_BACKEND_URL</code>). In stub mode the backend
-        serves canonical demo data; in live mode (<code>ANTHROPIC_API_KEY</code> set on
-        the backend host) each persona invokes its mapped subagent via the Claude Agent
-        SDK and Opus 4.7.
-      </div>
     </div>
   </div>
 
