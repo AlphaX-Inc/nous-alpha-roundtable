@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nous Alpha — Roundtable</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com/">
+  <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
+  <link href="./css2" rel="stylesheet">
+  <link rel="stylesheet" href="./roundtable.css">
+  <style>
+    /* Focused page chrome — center the iOS device on desktop, full-bleed on mobile */
+    body {
+      background:
+        radial-gradient(1400px 900px at 22% -10%, rgba(80,140,255,0.05), transparent 60%),
+        #050913;
+      color: rgba(255,255,255,0.78);
+      font-family: 'Inter', 'Noto Sans JP', -apple-system, system-ui, sans-serif;
+      min-height: 100vh;
+      margin: 0;
+      display: flex; flex-direction: column;
+    }
+    .focus-page {
+      width: 100%;
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 24px 16px 40px;
+      flex: 1;
+    }
+    .focus-head {
+      display: flex; align-items: end; justify-content: space-between;
+      padding-bottom: 18px; margin-bottom: 24px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .focus-head .brandlock {
+      display: flex; align-items: center; gap: 12px;
+      color: #fff; font-size: 20px; letter-spacing: -0.01em;
+    }
+    .focus-head .brandlock em {
+      font-style: italic; font-weight: 400; color: rgba(255,255,255,0.92);
+      font-family: serif;
+    }
+    .focus-head .meta {
+      text-align: right;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; letter-spacing: 0.08em;
+      color: rgba(255,255,255,0.54); text-transform: uppercase;
+    }
+    .focus-head .meta b { color: #fff; font-weight: 500; }
+
+    .stage-host {
+      display: grid;
+      place-items: center;
+      gap: 18px;
+      padding: 16px 0;
+    }
+    .stage-cap {
+      font: 11px/1 'JetBrains Mono', monospace;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: rgba(255,255,255,0.5);
+      padding: 6px 10px; border: 1px solid rgba(255,255,255,0.12); border-radius: 999px;
+    }
+    .stage-cap b { color: var(--pp-band-navy-accent, #2bb9ff); font-weight: 500; }
+
+    .agent-credit {
+      max-width: 460px;
+      margin: 14px auto 0;
+      padding: 12px 14px;
+      border: 1px solid rgba(43,185,255,0.22);
+      border-radius: 10px;
+      background: rgba(43,185,255,0.06);
+      color: rgba(255,255,255,0.7);
+      font-size: 11px; line-height: 1.55;
+    }
+    .agent-credit b { color: #fff; }
+    .agent-credit code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      color: #6dd5ff;
+    }
+  </style>
+</head>
+<body>
+  <div class="focus-page">
+    <div class="focus-head">
+      <div class="brandlock">
+        <em>Nous Alpha</em>
+        <span style="color:rgba(255,255,255,0.5);font-size:13px;font-family:'JetBrains Mono',monospace;letter-spacing:0.08em;text-transform:uppercase;">
+          Roundtable
+        </span>
+      </div>
+      <div class="meta">
+        <div><b>LIVE</b> · 11 AI agents</div>
+        <div>powered by Claude Code subagents</div>
+      </div>
+    </div>
+
+    <div class="stage-host">
+      <div class="stage-cap"><b>SCREEN 4</b> · ROUNDTABLE</div>
+      <div id="roundtable-mount"></div>
+      <div class="agent-credit">
+        Each of the 11 avatars is connected to a specific Claude Code subagent.
+        On screen mount, the page calls <code>/api/roundtable</code> on the Nous backend
+        (override via <code>window.NOUS_BACKEND_URL</code>). In stub mode the backend
+        serves canonical demo data; in live mode (<code>ANTHROPIC_API_KEY</code> set on
+        the backend host) each persona invokes its mapped subagent via the Claude Agent
+        SDK and Opus 4.7.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Hide the Variant-B Committee auto-mount on this page.
+    window.NOUS_HIDE_COMMITTEE = true;
+
+    // Backend URL — hostname-aware so the same file works locally and in
+    // production. Localhost → local Node server. Anything else → deployed
+    // Railway backend. Override at any time by setting window.NOUS_BACKEND_URL
+    // before the JSX scripts load.
+    (function () {
+      var h = location.hostname;
+      var isLocal = h === 'localhost' || h === '127.0.0.1' || h === '';
+      // ⚠ Replace PLACEHOLDER-BACKEND-URL with the actual Railway domain
+      // (e.g. nous-alpha-backend-production.up.railway.app) after deploy.
+      // If unreachable, the page falls back to in-file demo data and still renders.
+      window.NOUS_BACKEND_URL = isLocal
+        ? 'http://localhost:3001'
+        : 'https://PLACEHOLDER-BACKEND-URL.up.railway.app';
+    })();
+  </script>
+
+  <script src="./react.development.js" crossorigin="anonymous"></script>
+  <script src="./react-dom.development.js" crossorigin="anonymous"></script>
+  <script src="./babel.min.js" crossorigin="anonymous"></script>
+
+  <script type="text/babel" src="./ios-frame.jsx" data-plugins="transform-react-jsx-source"></script>
+  <script type="text/babel" src="./roundtable-personas.jsx" data-plugins="transform-react-jsx-source"></script>
+  <script type="text/babel" src="./paypay-screens.jsx" data-plugins="transform-react-jsx-source"></script>
+  <script type="text/babel" src="./paypay-roundtable.jsx" data-plugins="transform-react-jsx-source"></script>
+
+  <script type="text/babel" data-plugins="transform-react-jsx-source">
+    (() => {
+      const mount = () => {
+        const host = document.getElementById('roundtable-mount');
+        if (!host) return;
+        if (!window.IOSDevice || !window.PPRoundtableScreen) {
+          // Babel may still be transpiling; retry shortly.
+          return setTimeout(mount, 60);
+        }
+        const root = ReactDOM.createRoot(host);
+        // iPhone 17 Pro — 6.9" / 460 PPI / 2868×1320 native pixels
+        // Logical points (3x scale): 440×956
+        root.render(<IOSDevice width={440} height={956}><PPRoundtableScreen /></IOSDevice>);
+      };
+      mount();
+    })();
+  </script>
+</body>
+</html>
