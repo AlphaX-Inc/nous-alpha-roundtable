@@ -120,12 +120,12 @@
     (function () {
       var h = location.hostname;
       var isLocal = h === 'localhost' || h === '127.0.0.1' || h === '';
-      // ⚠ Replace PLACEHOLDER-BACKEND-URL with the actual Railway domain
-      // (e.g. nous-alpha-backend-production.up.railway.app) after deploy.
-      // If unreachable, the page falls back to in-file demo data and still renders.
+      // Production backend on Railway (paypay-nous-alpha-backend service in
+      // project 47da8817). If unreachable, the page falls back to in-file
+      // demo data and still renders.
       window.NOUS_BACKEND_URL = isLocal
         ? 'http://localhost:3001'
-        : 'https://PLACEHOLDER-BACKEND-URL.up.railway.app';
+        : 'https://nous-alpha-backend-production.up.railway.app';
     })();
   </script>
 
