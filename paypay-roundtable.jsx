@@ -86,6 +86,42 @@ const RTP_I18N = {
     loading: '11 AI agents are assembling the discussion…',
     speakingNow: 'Speaking',
   },
+  ko: {
+    appTitle: '포인트 운용',
+    tabs: [
+      { id: 'status', lbl: '운용 현황', ico: '☷' },
+      { id: 'history', lbl: '운용 이력', ico: '◉' },
+      { id: 'browse', lbl: '투자하기', ico: '⊕' },
+      { id: 'roundtable', lbl: 'Roundtable', ico: '◎', nous: true },
+      { id: 'other', lbl: '기타', ico: '⋯' },
+      { id: 'cta', lbl: '추가 투자', ico: '+', cta: true },
+    ],
+    liveLbl: 'LIVE',
+    liveElapsed: '논의 중 · 12분 경과',
+    discussionTitle: '최근 논의',
+    discussionAll: '전체',
+    stanceTitle: '11인의 오늘 입장',
+    resolutionTitle: '오늘의 결의',
+    resolutionTime: '2026년 4월 · 월례 검토',
+    rebalance: '추정 리밸런싱 금액',
+    nextRebalance: '5/1 자동 리밸런싱 예정 ›',
+    disclaimer: '※ Nous Alpha의 AI 에이전트는 과거 데이터와 공개 정보로 학습한 시뮬레이션입니다. 발언·결의·예측은 투자 자문이 아닙니다.',
+    miniHistory: '지난 30일 입장 추이',
+    miniRecent: '최근 발언',
+    miniEmpty: '오늘 발언은 아직 없습니다',
+    askCtaLbl: '이 라운드테이블에 질문하기',
+    askCtaHint: '11인의 AI 전문가가 논의',
+    askTitle: '라운드테이블에 질문하기',
+    askSub: '11인의 AI 에이전트가 논의를 구성합니다',
+    askPlaceholder: '11인의 전문가에게 던지고 싶은 질문을 입력 (예: 금리가 내려가기 시작하면 주축을 바꿔야 할까요?)',
+    askSubmit: '논의 시작',
+    askSubmitting: '논의 중…',
+    askChips: ['경기 침체 방어','AI 집중 리스크','인플레이션 재점화','미 국채 헷지 가치','고배당 vs 배당 그로스','엔화 약세 국면'],
+    askFootNote: '※ AI 에이전트의 응답은 시뮬레이션이며 투자 자문이 아닙니다.',
+    motionBanner: '오늘의 논의 주제',
+    loading: '11인의 AI 에이전트가 논의를 구성하고 있습니다…',
+    speakingNow: '발언 중',
+  },
 };
 
 const RTPLangContext = createContext('ja');
@@ -110,6 +146,7 @@ function useNousData(endpoint, lang, motion) {
     if (motion) {
       DISCUSSION.length = 0;
       DISCUSSION_EN.length = 0;
+      if (typeof DISCUSSION_KO !== 'undefined') DISCUSSION_KO.length = 0;
       AGENT_STANCE.fill('abs');
       AGENT_CONFIDENCE.fill(0);
       AGENT_PICK.fill(null);
@@ -118,6 +155,7 @@ function useNousData(endpoint, lang, motion) {
       AGENT_SPARK.splice(0, AGENT_SPARK.length, ..._deriveAgentSpark(AGENT_STANCE));
       if (typeof COMMITTEE_EVENTS !== 'undefined') COMMITTEE_EVENTS.length = 0;
       if (typeof COMMITTEE_EVENTS_EN !== 'undefined') COMMITTEE_EVENTS_EN.length = 0;
+      if (typeof COMMITTEE_EVENTS_KO !== 'undefined') COMMITTEE_EVENTS_KO.length = 0;
       // Force an immediate re-render so the placeholder shows before fetch resolves.
       force(x => x + 1);
     }
@@ -127,7 +165,7 @@ function useNousData(endpoint, lang, motion) {
       .then(data => {
         if (!data) return;
         if (Array.isArray(data.discussion) && data.discussion.length) {
-          const target = (lang === 'en') ? DISCUSSION_EN : DISCUSSION;
+          const target = (lang === 'en') ? DISCUSSION_EN : (lang === 'ko') ? DISCUSSION_KO : DISCUSSION;
           target.splice(0, target.length, ...data.discussion);
         }
         if (Array.isArray(data.stances) && data.stances.length === AGENT_STANCE.length) {
@@ -146,7 +184,7 @@ function useNousData(endpoint, lang, motion) {
         PICK_STATE.tally = (data.pickTally && typeof data.pickTally === 'object') ? data.pickTally : {};
         PICK_STATE.isComparison = !!data.isComparison;
         if (Array.isArray(data.events) && data.events.length) {
-          const target = (lang === 'en') ? COMMITTEE_EVENTS_EN : COMMITTEE_EVENTS;
+          const target = (lang === 'en') ? COMMITTEE_EVENTS_EN : (lang === 'ko') ? COMMITTEE_EVENTS_KO : COMMITTEE_EVENTS;
           target.splice(0, target.length, ...data.events);
         }
         if (Array.isArray(data.voteReasons) && data.voteReasons.length === 11) {
@@ -198,7 +236,11 @@ const DISCUSSION = [
 
 const STANCE_LABEL = { bull: '強気', bear: '弱気', abs: '棄権' };
 const STANCE_LABEL_EN = { bull: 'Bullish', bear: 'Bearish', abs: 'Hold' };
-const stanceLabel = (lang, s) => (lang === 'en' ? STANCE_LABEL_EN[s] : STANCE_LABEL[s]);
+const STANCE_LABEL_KO = { bull: '강세', bear: '약세', abs: '기권' };
+const stanceLabel = (lang, s) =>
+  lang === 'en' ? STANCE_LABEL_EN[s] :
+  lang === 'ko' ? STANCE_LABEL_KO[s] :
+                  STANCE_LABEL[s];
 const STANCE_COLOR = { bull: '#4ee2a3', bear: '#ff7a8a', abs: '#9aa6b8' };
 const STANCE_ARROW = { bull: '↑', bear: '↓', abs: '–' };
 
@@ -241,6 +283,19 @@ const AGENT_BIO_EN = [
   'Inverts: surfaces ruin risks, hidden assumptions, and one-way doors that the bullish framing skips.',
   'Bank-CEO lens on non-bank credit, private-credit opacity, and geopolitical risk.',
   'Deep-value analysis from book value, cash flow, and management incentives.',
+];
+const AGENT_BIO_KO = [
+  'AI 컴퓨팅 스케일링의 제1원리에서 출발해 연산량·전력·칩 공급 같은 병목을 평가하고, 그 시점에 희소성이 가격에 반영된 영역에 집중합니다.',
+  '변동성·거래량·모멘텀에서 통계적 차익거래 시그널을 추출합니다.',
+  '멀티 스트래티지 관점에서 롱숏 펀더멘털·이벤트 드리븐·퀀트·크레딧 슬리브 간 자본 배분을 최적화합니다.',
+  '매크로 환경(금리, 인플레이션, 성장)에서 올웨더형 포트폴리오의 축을 제시합니다.',
+  '차트 패턴과 상대 강도 지수로 단기 리스크 온/오프를 판단합니다.',
+  '회사채·국채의 크레딧 스프레드와 신용등급 천이 확률로 리스크를 평가합니다.',
+  '컨센서스와 반대 방향의 가설을 세우고 테일 리스크와 버블 징후를 경고합니다.',
+  '풋 스프레드·리스크 리버설 등 헷지 전략으로 드로다운을 억제합니다.',
+  '인버전(역사고)과 18가지 보편적 실패 모드를 활용해 강세 프레임이 놓친 파멸 리스크와 숨은 전제를 끄집어냅니다.',
+  '은행 CEO의 시각으로 비은행 신용·사모 신용·지정학 리스크를 평가합니다.',
+  '장부가·현금흐름·경영진 인센티브 기반의 딥 밸류 분석을 수행합니다.',
 ];
 
 // Stance history sparkline (last 30 days, -1..1)
@@ -376,6 +431,62 @@ const SLEEVE_DETAIL = {
       ],
     },
   },
+  ko: {
+    INC: {
+      code: 'PP-INC', fullName: 'Nous 인컴+',
+      tagline: '고배당 + 커버드콜 전략',
+      desc: '미국 고배당·저변동성 대형주를 중심으로, Mag-7 등에 커버드콜을 매도해 추가 수익을 창출하는 합성 슬리브. 인컴을 매월 누적하고 변동성 국면에서는 하방 완충 역할도 합니다.',
+      yield: '7.2%', vol: '9.4%', maxDD: '−4.7%', sharpe: '0.82',
+      holdings: [
+        { t: 'XOM',  n: 'Exxon Mobil',     w: 6.8 },
+        { t: 'JNJ',  n: 'Johnson & Johnson', w: 6.2 },
+        { t: 'CVX',  n: 'Chevron',          w: 5.4 },
+        { t: 'KO',   n: 'Coca-Cola',        w: 4.9 },
+        { t: 'PG',   n: 'Procter & Gamble', w: 4.5 },
+        { t: '...',  n: '커버드콜 매도 + 외 47개 종목', w: 72.2 },
+      ],
+    },
+    DIV: {
+      code: 'PP-DIV', fullName: 'Nous 배당 그로스',
+      tagline: '배당 성장 + 연속 증배 기업',
+      desc: '20년 이상 연속 배당을 늘려온 미국 우량 기업(Dividend Aristocrats)과 배당 성장률이 높은 섹터 리더로 구성. 인컴과 장기 자본 차익을 동시에 추구합니다.',
+      yield: '5.8%', vol: '11.2%', maxDD: '−12.4%', sharpe: '0.74',
+      holdings: [
+        { t: 'AAPL', n: 'Apple',            w: 7.1 },
+        { t: 'MSFT', n: 'Microsoft',        w: 6.4 },
+        { t: 'V',    n: 'Visa',             w: 5.2 },
+        { t: 'MA',   n: 'Mastercard',       w: 4.8 },
+        { t: 'COST', n: 'Costco',           w: 4.3 },
+        { t: '...',  n: '외 40개 종목',     w: 72.2 },
+      ],
+    },
+    BND: {
+      code: 'PP-BND', fullName: 'Nous 단기 채권',
+      tagline: '단·중기 국채 + 투자등급 회사채',
+      desc: '듀레이션 3~5년의 미 국채와 투자등급 회사채(IG)를 중심으로, TIPS로 인플레이션 헷지를 소량 더한 방어형 슬리브. 주식 하락 국면에서 완충 역할을 합니다.',
+      yield: '3.4%', vol: '4.2%', maxDD: '−2.8%', sharpe: '0.61',
+      holdings: [
+        { t: '3-7Y Treasury', n: '중기 미 국채',          w: 42.0 },
+        { t: 'IG Corp',       n: '투자등급 회사채',        w: 28.0 },
+        { t: 'TIPS',          n: '물가 연동 국채',         w: 15.0 },
+        { t: 'Agency MBS',    n: '에이전시 MBS',          w: 10.0 },
+        { t: 'Cash',          n: '현금 (T-bills)',         w: 5.0 },
+      ],
+    },
+    GLD: {
+      code: 'PP-GLD', fullName: 'Nous 골드+',
+      tagline: '금 + 광산주 + 테일 헷지',
+      desc: 'GLD와 금광주(NEM, GOLD)로 실물 보험을 보유하고, SPX 풋 스프레드로 작은 테일 헷지를 얹습니다. 레짐 시프트 시 보험으로 설계되었습니다.',
+      yield: '4.5%', vol: '13.8%', maxDD: '−7.2%', sharpe: '0.52',
+      holdings: [
+        { t: 'GLD',     n: '금 ETF',                       w: 55.0 },
+        { t: 'GDX',     n: '금광주 ETF',                   w: 22.0 },
+        { t: 'SPX puts', n: '풋 스프레드 헷지',             w: 8.0 },
+        { t: 'TLT',     n: '장기 미 국채 (테일용)',         w: 10.0 },
+        { t: 'Cash',    n: '현금',                          w: 5.0 },
+      ],
+    },
+  },
 };
 const PORTFOLIO_BAL = 847200;
 
@@ -396,7 +507,7 @@ function computeDecision(stances, confidences, lang) {
     if (sorted.length === 0) {
       return {
         counts, tilt: 0,
-        verdict: lang === 'en' ? 'Awaiting decision' : '結論待ち',
+        verdict: lang === 'en' ? 'Awaiting decision' : lang === 'ko' ? '결정 대기 중' : '結論待ち',
         verdictTone: 'flat',
         sleeves: { INC: 0, DIV: 0, BND: 0, GLD: 0 },
         rebalanceJpy: 0, projectedUplift: 0,
@@ -409,11 +520,11 @@ function computeDecision(stances, confidences, lang) {
     const margin = topVotes - (runnerUp ? runnerUp[1] : 0);
     let verdict;
     if (margin >= 5) {
-      verdict = lang === 'en' ? `${topName} (decisive)` : `${topName} (圧倒的)`;
+      verdict = lang === 'en' ? `${topName} (decisive)` : lang === 'ko' ? `${topName} (압도적)` : `${topName} (圧倒的)`;
     } else if (margin >= 2) {
-      verdict = lang === 'en' ? `${topName} preferred` : `${topName} を推す`;
+      verdict = lang === 'en' ? `${topName} preferred` : lang === 'ko' ? `${topName} 추천` : `${topName} を推す`;
     } else {
-      verdict = lang === 'en' ? `${topName} (split)` : `${topName} (拮抗)`;
+      verdict = lang === 'en' ? `${topName} (split)` : lang === 'ko' ? `${topName} (접전)` : `${topName} (拮抗)`;
     }
     return {
       counts, tilt: 0,
@@ -443,7 +554,7 @@ function computeDecision(stances, confidences, lang) {
     return {
       counts,
       tilt: 0,
-      verdict: lang === 'en' ? 'Awaiting decision' : '結論待ち',
+      verdict: lang === 'en' ? 'Awaiting decision' : lang === 'ko' ? '결정 대기 중' : '結論待ち',
       verdictTone: 'flat',
       sleeves: { INC: 0, DIV: 0, BND: 0, GLD: 0 },
       rebalanceJpy: 0,
@@ -453,13 +564,13 @@ function computeDecision(stances, confidences, lang) {
   }
   // Verdict label by tilt strength
   let verdict, verdictTone, sleeves;
-  if (tilt >= 8)       { verdict = lang === 'en' ? 'Core · Strong Buy' : '主軸 · 強い買い'; verdictTone = 'bull';    sleeves = { INC: +3, DIV:  0, BND: -2, GLD: -1 }; }
-  else if (tilt >= 4)  { verdict = lang === 'en' ? 'Core · Buy'        : '主軸 · 買い';     verdictTone = 'bull';    sleeves = { INC: +2, DIV:  0, BND: -1, GLD: -1 }; }
-  else if (tilt >= 1)  { verdict = lang === 'en' ? 'Mild · Buy'        : '小幅 · 買い';     verdictTone = 'bull';    sleeves = { INC: +1, DIV:  0, BND: -1, GLD:  0 }; }
-  else if (tilt === 0) { verdict = lang === 'en' ? 'Neutral'           : '中立';            verdictTone = 'flat';    sleeves = { INC:  0, DIV:  0, BND:  0, GLD:  0 }; }
-  else if (tilt >= -3) { verdict = lang === 'en' ? 'Cautious'          : '慎重';            verdictTone = 'bear';    sleeves = { INC: -1, DIV:  0, BND: +1, GLD:  0 }; }
-  else if (tilt >= -7) { verdict = lang === 'en' ? 'Defensive · Trim'  : '防御 · 軽量化';   verdictTone = 'bear';    sleeves = { INC: -1, DIV: -1, BND: +1, GLD: +1 }; }
-  else                 { verdict = lang === 'en' ? 'Defensive · Sell'  : '防御 · 売り';     verdictTone = 'bear';    sleeves = { INC: -2, DIV: -1, BND: +1, GLD: +2 }; }
+  if (tilt >= 8)       { verdict = lang === 'en' ? 'Core · Strong Buy' : lang === 'ko' ? '주축 · 강한 매수' : '主軸 · 強い買い'; verdictTone = 'bull';    sleeves = { INC: +3, DIV:  0, BND: -2, GLD: -1 }; }
+  else if (tilt >= 4)  { verdict = lang === 'en' ? 'Core · Buy'        : lang === 'ko' ? '주축 · 매수'      : '主軸 · 買い';     verdictTone = 'bull';    sleeves = { INC: +2, DIV:  0, BND: -1, GLD: -1 }; }
+  else if (tilt >= 1)  { verdict = lang === 'en' ? 'Mild · Buy'        : lang === 'ko' ? '소폭 · 매수'      : '小幅 · 買い';     verdictTone = 'bull';    sleeves = { INC: +1, DIV:  0, BND: -1, GLD:  0 }; }
+  else if (tilt === 0) { verdict = lang === 'en' ? 'Neutral'           : lang === 'ko' ? '중립'             : '中立';            verdictTone = 'flat';    sleeves = { INC:  0, DIV:  0, BND:  0, GLD:  0 }; }
+  else if (tilt >= -3) { verdict = lang === 'en' ? 'Cautious'          : lang === 'ko' ? '신중'             : '慎重';            verdictTone = 'bear';    sleeves = { INC: -1, DIV:  0, BND: +1, GLD:  0 }; }
+  else if (tilt >= -7) { verdict = lang === 'en' ? 'Defensive · Trim'  : lang === 'ko' ? '방어 · 축소'      : '防御 · 軽量化';   verdictTone = 'bear';    sleeves = { INC: -1, DIV: -1, BND: +1, GLD: +1 }; }
+  else                 { verdict = lang === 'en' ? 'Defensive · Sell'  : lang === 'ko' ? '방어 · 매도'      : '防御 · 売り';     verdictTone = 'bear';    sleeves = { INC: -2, DIV: -1, BND: +1, GLD: +2 }; }
 
   // Rebalance ¥ amount = sum of positive sleeve deltas (in pp) × balance / 100
   const positiveDelta = Object.values(sleeves).filter(v => v > 0).reduce((a, b) => a + b, 0);
@@ -559,7 +670,7 @@ function useAutoRotate(length, intervalMs = 4200) {
 function RoundtableHero({ activeIdx, onPickSpeaker, rotationStopped }) {
   const lang = useRTPLang();
   const copy = useRTPCopy();
-  const list = (lang === 'en') ? DISCUSSION_EN : DISCUSSION;
+  const list = (lang === 'en') ? DISCUSSION_EN : (lang === 'ko') ? DISCUSSION_KO : DISCUSSION;
   const active = list.length ? (list[activeIdx % list.length] || list[0]) : null;
   const speakerId = active ? active.speaker : -1;
   const decision = computeDecision(AGENT_STANCE, AGENT_CONFIDENCE, lang);
@@ -578,9 +689,9 @@ function RoundtableHero({ activeIdx, onPickSpeaker, rotationStopped }) {
         <span className="sep">·</span>
         <span className="elapsed">
           {!active
-            ? (lang === 'en' ? 'Awaiting deliberation…' : '審議準備中…')
+            ? (lang === 'en' ? 'Awaiting deliberation…' : lang === 'ko' ? '심의 준비 중…' : '審議準備中…')
             : rotationStopped
-              ? (lang === 'en' ? 'Tap any avatar' : 'アバターをタップ')
+              ? (lang === 'en' ? 'Tap any avatar' : lang === 'ko' ? '아바타를 탭하세요' : 'アバターをタップ')
               : copy.liveElapsed}
         </span>
       </div>
@@ -658,16 +769,14 @@ function RoundtableHero({ activeIdx, onPickSpeaker, rotationStopped }) {
 // ─── Active speaker quote panel ─────────────────────────────────────────
 function ActiveQuote({ activeIdx }) {
   const lang = useRTPLang();
-  const list = (lang === 'en') ? DISCUSSION_EN : DISCUSSION;
+  const list = (lang === 'en') ? DISCUSSION_EN : (lang === 'ko') ? DISCUSSION_KO : DISCUSSION;
   if (!list.length) {
     return (
       <div className="rtp-quote">
         <div className="rtp-quote-empty">
           <div className="dots"><span/><span/><span/></div>
           <div className="lbl">
-            {lang === 'en'
-              ? 'Agents are deliberating on your motion…'
-              : 'エージェントが質問について議論中…'}
+            {lang === 'en' ? 'Agents are deliberating on your motion…' : lang === 'ko' ? '에이전트가 질문에 대해 논의 중…' : 'エージェントが質問について議論中…'}
           </div>
         </div>
       </div>
@@ -687,7 +796,7 @@ function ActiveQuote({ activeIdx }) {
           </div>
         </div>
         {active.pick
-          ? <div className="stance-pill pick" title={lang === 'en' ? 'Picks' : '推し'}>→ {active.pick}</div>
+          ? <div className="stance-pill pick" title={lang === 'en' ? 'Picks' : lang === 'ko' ? '추천' : '推し'}>→ {active.pick}</div>
           : <div className={`stance-pill ${active.stance}`}>
               {STANCE_ARROW[active.stance]} {stanceLabel(lang, active.stance)}
             </div>}
@@ -703,7 +812,7 @@ function ActiveQuote({ activeIdx }) {
 function DiscussionFeed({ activeIdx }) {
   const lang = useRTPLang();
   const copy = useRTPCopy();
-  const list = (lang === 'en') ? DISCUSSION_EN : DISCUSSION;
+  const list = (lang === 'en') ? DISCUSSION_EN : (lang === 'ko') ? DISCUSSION_KO : DISCUSSION;
   if (!list.length) {
     return (
       <div className="rtp-feed">
@@ -712,9 +821,7 @@ function DiscussionFeed({ activeIdx }) {
           <div className="more">—</div>
         </div>
         <div className="rtp-feed-empty">
-          {lang === 'en'
-            ? 'No statements yet. Agents are working on the new motion.'
-            : 'まだ発言はありません。新しい議題について協議中です。'}
+          {lang === 'en' ? 'No statements yet. Agents are working on the new motion.' : lang === 'ko' ? '아직 발언이 없습니다. 새로운 의제에 대해 논의 중입니다.' : 'まだ発言はありません。新しい議題について協議中です。'}
         </div>
       </div>
     );
@@ -763,7 +870,7 @@ function StanceGrid({ onPick }) {
     <div className="rtp-grid-section">
       <div className="rtp-section-hd">
         <div className="lbl">{copy.stanceTitle}</div>
-        <div className="more">{lang === 'en' ? 'Tap for detail ›' : 'タップで詳細 ›'}</div>
+        <div className="more">{lang === 'en' ? 'Tap for detail ›' : lang === 'ko' ? '탭하여 상세 ›' : 'タップで詳細 ›'}</div>
       </div>
       <div className="rtp-grid">
         {Personas.map((p, i) => {
@@ -784,10 +891,10 @@ function StanceGrid({ onPick }) {
                   ? <span className="stance-pill mini pick">→ {pick}</span>
                   : <span className={`stance-pill mini ${stance}`}>{STANCE_ARROW[stance]} {stanceLabel(lang, stance)}</span>}
                 {!pick && stance !== 'abs' && (
-                  <span className="conf">{lang === 'en' ? 'Conf.' : '確信度'} {Math.round(conf * 100)}%</span>
+                  <span className="conf">{lang === 'en' ? 'Conf.' : lang === 'ko' ? '확신도' : '確信度'} {Math.round(conf * 100)}%</span>
                 )}
                 {pick && stance === 'bull' && (
-                  <span className="conf">{lang === 'en' ? 'Conf.' : '確信度'} {Math.round(conf * 100)}%</span>
+                  <span className="conf">{lang === 'en' ? 'Conf.' : lang === 'ko' ? '확신도' : '確信度'} {Math.round(conf * 100)}%</span>
                 )}
               </div>
             </div>
@@ -863,7 +970,7 @@ function ResolutionCard({ onSleeveTap }) {
                   type="button"
                   className="act"
                   onClick={() => onSleeveTap && onSleeveTap(k)}
-                  aria-label={`${sleeveLabels[k]} ${lang === 'en' ? 'details' : '詳細'}`}>
+                  aria-label={`${sleeveLabels[k]} ${lang === 'en' ? 'details' : lang === 'ko' ? '상세' : '詳細'}`}>
                   <div className="lbl">{sleeveLabels[k]}</div>
                   <div className={`op ${fmt.sign}`}>{fmt.label}</div>
                   <div className="exp">{before}% → <b>{after}%</b></div>
@@ -877,22 +984,22 @@ function ResolutionCard({ onSleeveTap }) {
           <div className="rtp-impact">
             <div className="impact-head">
               <span className="dot"></span>
-              <b>{lang === 'en' ? 'Committee outcome' : '委員会の結論'}</b>
+              <b>{lang === 'en' ? 'Committee outcome' : lang === 'ko' ? '위원회 결론' : '委員会の結論'}</b>
             </div>
             <div className="impact-row">
-              <div className="k">{lang === 'en' ? 'Top pick' : '最多得票'}</div>
+              <div className="k">{lang === 'en' ? 'Top pick' : lang === 'ko' ? '최다 득표' : '最多得票'}</div>
               <div className="v" style={{color: STANCE_COLOR.bull}}>
                 {decision.topPick ? `${decision.topPick.name} (${decision.topPick.votes})` : '—'}
               </div>
             </div>
             {decision.runnerUp && (
               <div className="impact-row">
-                <div className="k">{lang === 'en' ? 'Runner-up' : '次点'}</div>
+                <div className="k">{lang === 'en' ? 'Runner-up' : lang === 'ko' ? '차점' : '次点'}</div>
                 <div className="v">{decision.runnerUp.name} ({decision.runnerUp.votes})</div>
               </div>
             )}
             <div className="impact-row">
-              <div className="k">{lang === 'en' ? 'Abstain' : '棄権'}</div>
+              <div className="k">{lang === 'en' ? 'Abstain' : lang === 'ko' ? '기권' : '棄権'}</div>
               <div className="v">{decision.counts.abs}</div>
             </div>
           </div>
@@ -900,41 +1007,39 @@ function ResolutionCard({ onSleeveTap }) {
         <div className="rtp-impact">
           <div className="impact-head">
             <span className="dot"></span>
-            <b>{lang === 'en' ? 'Impact on your portfolio' : 'あなたのポートフォリオへの影響'}</b>
+            <b>{lang === 'en' ? 'Impact on your portfolio' : lang === 'ko' ? '귀하의 포트폴리오에 미치는 영향' : 'あなたのポートフォリオへの影響'}</b>
           </div>
           <div className="impact-row">
-            <div className="k">{lang === 'en' ? 'Balance' : '運用残高'}</div>
+            <div className="k">{lang === 'en' ? 'Balance' : lang === 'ko' ? '운용 잔고' : '運用残高'}</div>
             <div className="v">¥847,200</div>
           </div>
           <div className="impact-row">
             <div className="k">{copy.rebalance}</div>
             <div className="v">
               {decision.rebalanceJpy === 0
-                ? (lang === 'en' ? 'No rebalance' : 'リバランスなし')
-                : (lang === 'en'
-                    ? `${_formatJpy(decision.rebalanceJpy)} / −${decision.rebalanceJpy.toLocaleString('en-US')} rotation`
-                    : `${_formatJpy(decision.rebalanceJpy)} / −${decision.rebalanceJpy.toLocaleString('en-US')} の入替`)}
+                ? (lang === 'en' ? 'No rebalance' : lang === 'ko' ? '리밸런싱 없음' : 'リバランスなし')
+                : (lang === 'en' ? `${_formatJpy(decision.rebalanceJpy)} / −${decision.rebalanceJpy.toLocaleString('en-US')} rotation` : lang === 'ko' ? `${_formatJpy(decision.rebalanceJpy)} / −${decision.rebalanceJpy.toLocaleString('en-US')} 교체` : `${_formatJpy(decision.rebalanceJpy)} / −${decision.rebalanceJpy.toLocaleString('en-US')} の入替`)}
             </div>
           </div>
           <div className="impact-row">
-            <div className="k">{lang === 'en' ? 'Execution cost' : '執行コスト'}</div>
+            <div className="k">{lang === 'en' ? 'Execution cost' : lang === 'ko' ? '집행 비용' : '執行コスト'}</div>
             <div className="v">
               {(() => {
-                if (decision.rebalanceJpy === 0) return lang === 'en' ? '—' : '—';
+                if (decision.rebalanceJpy === 0) return '—';
                 // 0.082% of total balance (proportional to rebalance size)
                 const sizePct = decision.rebalanceJpy / PORTFOLIO_BAL; // e.g. 0.02 for 2pp
                 const cost = Math.round(-PORTFOLIO_BAL * 0.00082 * (sizePct / 0.02));
                 const pct = (Math.abs(cost) / PORTFOLIO_BAL * 100).toFixed(3);
-                return `¥${cost.toLocaleString('en-US')} (${lang === 'en' ? `approx. ${pct}%` : `約 ${pct}%`})`;
+                return `¥${cost.toLocaleString('en-US')} (${lang === 'en' ? `approx. ${pct}%` : lang === 'ko' ? `약 ${pct}%` : `約 ${pct}%`})`;
               })()}
             </div>
           </div>
           <div className="impact-row">
-            <div className="k">{lang === 'en' ? 'Projected annual uplift' : '予想年率向上'}</div>
+            <div className="k">{lang === 'en' ? 'Projected annual uplift' : lang === 'ko' ? '예상 연 수익률 향상' : '予想年率向上'}</div>
             <div className="v" style={{color: decision.projectedUplift > 0 ? STANCE_COLOR.bull : STANCE_COLOR.abs}}>
               {decision.projectedUplift === 0
-                ? (lang === 'en' ? '—' : '—')
-                : `+${decision.projectedUplift.toFixed(2)}% (${lang === 'en' ? 'simulation' : 'シミュレーション'})`}
+                ? '—'
+                : `+${decision.projectedUplift.toFixed(2)}% (${lang === 'en' ? 'simulation' : lang === 'ko' ? '시뮬레이션' : 'シミュレーション'})`}
             </div>
           </div>
         </div>
@@ -942,7 +1047,7 @@ function ResolutionCard({ onSleeveTap }) {
         {!decision.isComparison && (
           <div className="rtp-res-cta">
             <div className="primary">{copy.nextRebalance}</div>
-            <div className="secondary">{lang === 'en' ? 'Approve manually' : '手動で承認'}</div>
+            <div className="secondary">{lang === 'en' ? 'Approve manually' : lang === 'ko' ? '수동 승인' : '手動で承認'}</div>
           </div>
         )}
       </div>
@@ -957,9 +1062,9 @@ function MiniProfile({ idx, onClose }) {
   if (idx == null) return null;
   const p = Personas[idx];
   const stance = AGENT_STANCE[idx];
-  const bio = (lang === 'en' ? AGENT_BIO_EN : AGENT_BIO)[idx];
+  const bio = (lang === 'en' ? AGENT_BIO_EN : lang === 'ko' ? AGENT_BIO_KO : AGENT_BIO)[idx];
   const spark = AGENT_SPARK[idx];
-  const list = (lang === 'en') ? DISCUSSION_EN : DISCUSSION;
+  const list = (lang === 'en') ? DISCUSSION_EN : (lang === 'ko') ? DISCUSSION_KO : DISCUSSION;
   const w = 280, h = 60;
   const stepX = w / (spark.length - 1);
   const yAt = v => h / 2 - v * (h / 2 - 6);
@@ -986,16 +1091,16 @@ function MiniProfile({ idx, onClose }) {
           <circle cx={(spark.length-1)*stepX} cy={yAt(spark[spark.length-1])} r="3" fill={STANCE_COLOR[stance]}/>
         </svg>
         <div className="spark-axis">
-          <span>{lang === 'en' ? 'Bull' : '強気'}</span>
-          <span>{lang === 'en' ? 'Neutral' : '中立'}</span>
-          <span>{lang === 'en' ? 'Bear' : '弱気'}</span>
+          <span>{lang === 'en' ? 'Bull' : lang === 'ko' ? '강세' : '強気'}</span>
+          <span>{lang === 'en' ? 'Neutral' : lang === 'ko' ? '중립' : '中立'}</span>
+          <span>{lang === 'en' ? 'Bear' : lang === 'ko' ? '약세' : '弱気'}</span>
         </div>
         <div className="sub-hd">{copy.miniRecent}</div>
         <div className="profile-quotes">
           {list.filter(d => d.speaker === idx).slice(0, 2).map((d, k) => (
             <div key={k} className="pq">
               <div className="t">{d.t}</div>
-              <div className="x">{lang === 'en' ? `“${d.text}”` : `「${d.text}」`}</div>
+              <div className="x">{lang === 'en' ? `“${d.text}”` : lang === 'ko' ? `“${d.text}”` : `「${d.text}」`}</div>
             </div>
           ))}
           {list.filter(d => d.speaker === idx).length === 0 && (
@@ -1047,7 +1152,7 @@ function AskSheet({ open, onClose, onSubmit, submitting }) {
             <div className="rtp-ask-sub">{copy.askSub}</div>
           </div>
           <button type="button" className="rtp-ask-close" onClick={onClose}
-                  aria-label={lang === 'en' ? 'Close' : '閉じる'}>×</button>
+                  aria-label={lang === 'en' ? 'Close' : lang === 'ko' ? '닫기' : '閉じる'}>×</button>
         </div>
 
         <div className="rtp-ask-chips">
@@ -1104,33 +1209,33 @@ function SleeveDetailSheet({ openKey, onClose }) {
                 <div className="rtp-sleeve-tagline">{sleeve.tagline}</div>
               </div>
               <button type="button" className="rtp-sleeve-close" onClick={onClose}
-                      aria-label={lang === 'en' ? 'Close' : '閉じる'}>×</button>
+                      aria-label={lang === 'en' ? 'Close' : lang === 'ko' ? '닫기' : '閉じる'}>×</button>
             </div>
 
             <div className="rtp-sleeve-stats">
-              <div className="stat"><div className="k">{lang === 'en' ? 'Target yield' : '目標年利'}</div><div className="v bull">{sleeve.yield}</div></div>
-              <div className="stat"><div className="k">{lang === 'en' ? 'Vol (1y)' : 'ボラ (1年)'}</div><div className="v">{sleeve.vol}</div></div>
-              <div className="stat"><div className="k">{lang === 'en' ? 'Max DD' : '最大DD'}</div><div className="v bear">{sleeve.maxDD}</div></div>
+              <div className="stat"><div className="k">{lang === 'en' ? 'Target yield' : lang === 'ko' ? '목표 연 수익률' : '目標年利'}</div><div className="v bull">{sleeve.yield}</div></div>
+              <div className="stat"><div className="k">{lang === 'en' ? 'Vol (1y)' : lang === 'ko' ? '변동성 (1년)' : 'ボラ (1年)'}</div><div className="v">{sleeve.vol}</div></div>
+              <div className="stat"><div className="k">{lang === 'en' ? 'Max DD' : lang === 'ko' ? '최대 DD' : '最大DD'}</div><div className="v bear">{sleeve.maxDD}</div></div>
               <div className="stat"><div className="k">Sharpe</div><div className="v">{sleeve.sharpe}</div></div>
             </div>
 
             <div className="rtp-sleeve-allocation">
               <div className="row">
-                <div className="k">{lang === 'en' ? 'Current allocation' : '現在の配分'}</div>
+                <div className="k">{lang === 'en' ? 'Current allocation' : lang === 'ko' ? '현재 배분' : '現在の配分'}</div>
                 <div className="v">{before}%</div>
               </div>
               <div className="row">
-                <div className="k">{lang === 'en' ? 'Today’s recommended change' : '本日の推奨変更'}</div>
+                <div className="k">{lang === 'en' ? 'Today’s recommended change' : lang === 'ko' ? '오늘의 권장 변경' : '本日の推奨変更'}</div>
                 <div className={`v ${fmtDelta.sign}`}>
                   {fmtDelta.label} → <b>{after}%</b>
                 </div>
               </div>
             </div>
 
-            <div className="rtp-sleeve-section-h">{lang === 'en' ? 'Description' : '概要'}</div>
+            <div className="rtp-sleeve-section-h">{lang === 'en' ? 'Description' : lang === 'ko' ? '개요' : '概要'}</div>
             <div className="rtp-sleeve-desc">{sleeve.desc}</div>
 
-            <div className="rtp-sleeve-section-h">{lang === 'en' ? 'Top holdings' : '主な構成銘柄'}</div>
+            <div className="rtp-sleeve-section-h">{lang === 'en' ? 'Top holdings' : lang === 'ko' ? '주요 구성 종목' : '主な構成銘柄'}</div>
             <div className="rtp-sleeve-holdings">
               {sleeve.holdings.map((h, i) => (
                 <div key={i} className="hold">
@@ -1147,9 +1252,7 @@ function SleeveDetailSheet({ openKey, onClose }) {
             </div>
 
             <div className="rtp-sleeve-foot-note">
-              {lang === 'en'
-                ? 'Composition is illustrative for the prototype; not an actual managed portfolio.'
-                : '構成は試作版のサンプル表示で、実際の運用ポートフォリオではありません。'}
+              {lang === 'en' ? 'Composition is illustrative for the prototype; not an actual managed portfolio.' : lang === 'ko' ? '구성은 프로토타입용 예시이며 실제 운용 포트폴리오가 아닙니다.' : '構成は試作版のサンプル表示で、実際の運用ポートフォリオではありません。'}
             </div>
           </>
         )}
@@ -1159,15 +1262,22 @@ function SleeveDetailSheet({ openKey, onClose }) {
 }
 
 // JP/EN language toggle pill — mirrors cab-lang from the Committee variant
+// Language options shown in both the floating LangToggle and the inline
+// Committee-variant toggle. Add a new entry here to expose another language.
+const LANG_OPTIONS = [
+  { code: 'ja', lbl: 'JP' },
+  { code: 'en', lbl: 'EN' },
+  { code: 'ko', lbl: 'KO' },
+];
+
 function LangToggle({ lang, onChange }) {
   return (
     <div className="rtp-lang" role="group" aria-label="Language">
-      <button type="button"
-              className={lang === 'ja' ? 'active' : ''}
-              onClick={() => onChange('ja')}>JP</button>
-      <button type="button"
-              className={lang === 'en' ? 'active' : ''}
-              onClick={() => onChange('en')}>EN</button>
+      {LANG_OPTIONS.map(o => (
+        <button key={o.code} type="button"
+                className={lang === o.code ? 'active' : ''}
+                onClick={() => onChange(o.code)}>{o.lbl}</button>
+      ))}
     </div>
   );
 }
@@ -1203,7 +1313,7 @@ function PPRoundtableScreen() {
   const [askOpen, setAskOpen] = useState(false);
   const [sleeveKey, setSleeveKey] = useState(null);
   const { isLoading, lastMotion } = useNousData('roundtable', lang, motion);
-  const list = (lang === 'en') ? DISCUSSION_EN : DISCUSSION;
+  const list = (lang === 'en') ? DISCUSSION_EN : (lang === 'ko') ? DISCUSSION_KO : DISCUSSION;
   // Speaker rotation cadence — long enough to read the quote comfortably.
   // Was 4200ms; bumped to 8500ms after user feedback. Auto-rotation stops
   // after each persona has been shown once; user can tap any avatar to
@@ -1238,7 +1348,7 @@ function PPRoundtableScreen() {
           {lastMotion && (
             <div className="rtp-motion-banner">
               <div className="lbl">{copy.motionBanner}</div>
-              <div className="txt">{lang === 'en' ? `“${lastMotion}”` : `「${lastMotion}」`}</div>
+              <div className="txt">{lang === 'en' ? `“${lastMotion}”` : lang === 'ko' ? `“${lastMotion}”` : `「${lastMotion}」`}</div>
             </div>
           )}
           {isLoading && (
@@ -1394,6 +1504,63 @@ const COMMITTEE_I18N = {
     next: 'Auto-rebalance scheduled for May 1',
     disclaimer: 'Variant B is a transparency-first comparison: users can follow who argued what, why, and how each expert voted.',
   },
+  ko: {
+    appTitle: '포인트 운용',
+    tabs: [
+      { id: 'status', lbl: '운용 현황', ico: '☷' },
+      { id: 'history', lbl: '운용 이력', ico: '◉' },
+      { id: 'browse', lbl: '투자하기', ico: '⊕' },
+      { id: 'roundtable', lbl: 'Committee', ico: '◎', nous: true },
+      { id: 'other', lbl: '기타', ico: '⋯' },
+      { id: 'cta', lbl: '추가 투자', ico: '+', cta: true },
+    ],
+    phases: [
+      { id: 'agenda', label: '안건', meta: '브리프' },
+      { id: 'debate', label: '토론', meta: 'LIVE' },
+      { id: 'vote', label: '투표', meta: '12표' },
+      { id: 'decision', label: '결정', meta: '가결' },
+    ],
+    monthReview: '4월 월례 심의',
+    motionEyebrow: '오늘의 의제',
+    motionTitle: 'PP-INC 비중을 +2% 늘려야 하는가?',
+    motionBody: '수익성, 하방 리스크, 집행 비용을 11인의 전문가 에이전트가 차례로 검증합니다.',
+    speakerTags: ['근거: 시장 데이터', '영향: 연 +0.18%', '논점: 하방 보호'],
+    speakingNow: '발언 중',
+    agendaTitle: '심의 안건',
+    agendaMeta: '4개 항목',
+    agendaItems: [
+      '인컴 수익이 목표 연 7.2%에 도달할 수 있는가',
+      '주식 밸류에이션 과열 반론을 어떻게 다룰 것인가',
+      'PP-BND와 PP-GLD의 보험 비용을 허용 가능한가',
+      '5/1 자동 리밸런싱으로 회부해도 좋은가',
+    ],
+    debateTitle: '토론 로그',
+    debateMeta: '발언 순서',
+    voteCounts: { bull: '7 강세', abs: '2 기권', bear: '2 약세' },
+    voteReasons: [
+      'AI 컴퓨팅 병목에 베팅',
+      '통계 시그널은 약한 매수',
+      '멀티 스트래티지로 증액 찬성',
+      '금리 피크아웃을 평가',
+      '단기 시그널 부족으로 기권',
+      '채권 슬리브 조건부 찬성',
+      '밸류에이션 과열 경계',
+      '헷지 두텁게 깔면 찬성',
+      '강세 전제 반전해 재점검',
+      '비은행 신용 리스크 경계',
+      '밸류 편향으로 조건부 찬성',
+    ],
+    hold: '보류',
+    decisionTitle: '가결 · 주축 매수 확대',
+    impact: {
+      rebalance: '추정 리밸런싱 금액',
+      cost: '집행 비용',
+      uplift: '예상 연 수익률 향상',
+      rebalanceValue: '¥16,940 교체',
+    },
+    next: '5/1 자동 리밸런싱 예정',
+    disclaimer: '※ B안은 사용자가 "누가 무엇을 근거로 주장했고, 어떻게 투표했는지"를 시계열로 추적할 수 있는 투명성 중심의 비교안입니다.',
+  },
 };
 
 const DISCUSSION_EN = [
@@ -1406,6 +1573,18 @@ const DISCUSSION_EN = [
   { speaker: 7, text: 'VIX is near the floor. Tail risk is cheap. I would add a light put-spread hedge to the INC sleeve.', stance: 'bull', topic: 'Risk / Hedging', t: '12:21' },
   { speaker: 10, text: 'Conditional yes. Add more value bias to the high-dividend sleeve and tilt toward lower-PE names within dividend growth.', stance: 'bull', topic: 'Deep Value', t: '12:17' },
   { speaker: 2, text: 'From a multi-strategy lens, the INC increase has acceptable risk-adjusted return. 8.2bps friction is within tolerance.', stance: 'bull', topic: 'Multi-strategy', t: '12:14' },
+];
+
+const DISCUSSION_KO = [
+  { speaker: 0, text: 'AI 컴퓨팅 스케일링의 본류는 여전히 강합니다. 전력·칩 공급 병목을 통과하는 종목에 집중하고 싶습니다. 테크 비중은 타당합니다.', stance: 'bull', topic: 'AI · 컴퓨팅', t: '12:42' },
+  { speaker: 3, text: '실질금리 피크는 지났습니다. 인컴+채권 슬리브는 지속 가능하며 리스크 패리티 관점에서 매력적입니다.', stance: 'bull', topic: '매크로 · 올웨더', t: '12:39' },
+  { speaker: 1, text: '최근 30일의 거래량 프로파일과 변동성 서피스를 보면 INC 슬리브는 현 상태 유지가 적절합니다. 시그널은 약한 매수입니다.', stance: 'bull', topic: '퀀트 · 팩터', t: '12:35' },
+  { speaker: 6, text: '고배당 대형주의 밸류에이션이 과열 기미입니다. 저는 반대표를 던집니다. GLD 비중을 올려 대비해야 합니다.', stance: 'bear', topic: '컨트래리언', t: '12:31' },
+  { speaker: 5, text: '크레딧 스프레드는 역사적으로 타이트합니다. 여기서 과도하게 강세에 편승하는 것은 신중해야 합니다. 배당 그로스 신규 매수는 보수적으로.', stance: 'bull', topic: '크레딧', t: '12:28' },
+  { speaker: 9, text: '비은행 신용 시장 확장과 사모 신용의 불투명성을 경계합니다. 스트레스 시나리오에 대비해 현금 버퍼를 두텁게 유지해야 합니다.', stance: 'bear', topic: '뱅킹 · 신용', t: '12:24' },
+  { speaker: 7, text: 'VIX는 바닥권입니다. 테일 리스크가 싸게 매수 가능합니다. INC 슬리브에 풋 스프레드 헷지를 얇게 깔고 싶습니다.', stance: 'bull', topic: '리스크 · 헷지', t: '12:21' },
+  { speaker: 10, text: '조건부 찬성. 고배당 슬리브에 밸류 편향을 더하고 배당 그로스 내에서도 저PER 종목으로 기울이고 싶습니다.', stance: 'bull', topic: '딥 밸류', t: '12:17' },
+  { speaker: 2, text: '멀티 스트래티지 관점에서 INC 슬리브 증액은 리스크 조정 수익률이 합당합니다. 집행 비용 8.2bps도 허용 범위입니다.', stance: 'bull', topic: '멀티 스트래티지', t: '12:14' },
 ];
 
 const COMMITTEE_EVENTS = [
@@ -1422,6 +1601,14 @@ const COMMITTEE_EVENTS_EN = [
   { kind: 'evidence', speaker: 1, time: '12:35', title: 'Data check', text: 'Volume profile and vol surface point to a weak buy. CPI came in below forecast and flows continue.', stance: 'bull', evidence: ['CPI +2.4%', '8.2bps'] },
   { kind: 'counter', speaker: 5, time: '12:28', title: 'Conditional yes', text: 'Credit is tight. If PP-BND goes down 1%, add a monthly review condition.', stance: 'bull', evidence: ['Spreads', 'Review condition'] },
   { kind: 'lock', speaker: 2, time: '12:14', title: 'Vote lock', text: 'Execution friction is 8.2 bps. Slippage is within limits, so the decision can be executed.', stance: 'bull', evidence: ['Liquidity', 'Executable'] },
+];
+
+const COMMITTEE_EVENTS_KO = [
+  { kind: 'motion', speaker: 3, time: '12:39', title: '제안', text: 'PP-INC 비중 +2%. 금리 피크아웃 이후 인컴 재평가를 노립니다.', stance: 'bull', evidence: ['실질금리', 'VIX 안정'] },
+  { kind: 'challenge', speaker: 6, time: '12:31', title: '반대 의견', text: '대형주는 과열 기미입니다. 비중을 올린다면 GLD 보험도 함께 늘려야 합니다.', stance: 'bear', evidence: ['PER 상승', '집중 리스크'] },
+  { kind: 'evidence', speaker: 1, time: '12:35', title: '데이터 제시', text: '거래량 프로파일과 변동성 서피스는 약한 매수 시그널. CPI는 예상 하회로 자금 유입이 지속됩니다.', stance: 'bull', evidence: ['CPI +2.4%', '8.2bps'] },
+  { kind: 'counter', speaker: 5, time: '12:28', title: '조건부 찬성', text: '크레딧이 타이트합니다. PP-BND를 -1% 한다면 월별 재점검 조건을 답니다.', stance: 'bull', evidence: ['스프레드', '재점검 조건'] },
+  { kind: 'lock', speaker: 2, time: '12:14', title: '투표 락', text: '집행 마찰은 8.2bps. 슬리피지는 기준 내이며 가결 후 집행 가능합니다.', stance: 'bull', evidence: ['유동성', '집행 가능'] },
 ];
 
 function CommitteeSkyHead({ lang }) {
@@ -1497,8 +1684,8 @@ function PPCommitteeScreen() {
   const [lang, setLang] = useState('ja');
   useNousData('committee', lang);
   const copy = COMMITTEE_I18N[lang] || COMMITTEE_I18N.ja;
-  const discussion = lang === 'en' ? DISCUSSION_EN : DISCUSSION;
-  const events = lang === 'en' ? COMMITTEE_EVENTS_EN : COMMITTEE_EVENTS;
+  const discussion = lang === 'en' ? DISCUSSION_EN : lang === 'ko' ? DISCUSSION_KO : DISCUSSION;
+  const events = lang === 'en' ? COMMITTEE_EVENTS_EN : lang === 'ko' ? COMMITTEE_EVENTS_KO : COMMITTEE_EVENTS;
   const active = discussion[activeIdx];
   const speaker = Personas[active.speaker];
   const queue = [0, 1, 2, 3].map(n => {
@@ -1516,8 +1703,11 @@ function PPCommitteeScreen() {
           INVESTMENT COMMITTEE LIVE
           <b>{copy.monthReview}</b>
           <div className="cab-lang" aria-label="Language">
-            <button type="button" className={lang === 'ja' ? 'active' : ''} onClick={() => setLang('ja')}>JP</button>
-            <button type="button" className={lang === 'en' ? 'active' : ''} onClick={() => setLang('en')}>EN</button>
+            {LANG_OPTIONS.map(o => (
+              <button key={o.code} type="button"
+                      className={lang === o.code ? 'active' : ''}
+                      onClick={() => setLang(o.code)}>{o.lbl}</button>
+            ))}
           </div>
         </div>
         <div className="cab-motion">
